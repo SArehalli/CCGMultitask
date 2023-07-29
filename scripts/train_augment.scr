@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH --job-name=ccg-augment-lm
+#SBATCH --time=47:0:0
+#SBATCH --partition=gpuk80
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=6
+#SBATCH --ntasks-per-node=1
+#SBATCH --nodes=1
+#SBATCH --mail-type=end
+#SBATCH --output=logs/sgd_out-augment-%a.log
+
+#### load and unload modules you may need
+module load cuda
+module load pytorch
+
+w=$(echo "scale=2 ; $((($SLURM_ARRAY_TASK_ID % 2) + 1)) / 2" | bc)
+s=$(($SLURM_ARRAY_TASK_ID / 2))
+python -u main.py --train augment --data_lm data/gulordava/ --data_ccg data/ccg_supertags/ --save models/augment/augment_${w}_${s}_sgd --hid_dim 650 --emb_dim 650 --seq_len 35 --n_layers 2 --batch_size 128 --batch_size_aug 32 --epochs 20 --seed $s --log_interval 2000 --clip 0.25 --dropout 0.2 --lr 20 --wd 0.0 --cuda --lm_weight $w --opt sgd --patience 1 --ccg_pred_offset 0
